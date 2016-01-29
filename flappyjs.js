@@ -5,7 +5,7 @@ console.log('Running flappyjs.js');
 var canvas = document.getElementById('canvasBO'); // the canvas element
 var ctx = canvas.getContext('2d'); // the canvas rendering context
 
-var GLOBALS = {obsSpeed : 5};
+var GLOBALS = {obsSpeed : -5};
 var game = {obsSpeed : GLOBALS.obsSpeed};
 
 var highscore = 0; // Could try store this serverside.
@@ -22,10 +22,11 @@ Vector2d.prototype.mult = function(s) {
 	this.x *= s;
 	this.y *= s;
 };
-var Obstacle = function(x,y) {
+var Obstacle = function(x,y,s) {
 	this.x = x;
 	this.y = y;
-	this.w = 100; // half of the width
+	this.siblings = s; // # fellow boxes
+	this.w = 25; // half of the width
 	this.h = 30;
 };
 Obstacle.prototype.draw = function() {
@@ -43,24 +44,31 @@ Obstacle.prototype.outOfBounds = function() {
 	return false;
 };
 
-Obstacle.prototype.update = function() {
-	this.x+=game.obsSpeed;
-	this.draw; // * Only redraw when game is running!
-};
-
 var ObstacleController = function(){
 	this.obstacles = [];
-	this.spawnTime = 60; //.."time" between spawns
+	this.spacing = canvas.width/2;
 };
 
-ObstacleController.prototype.spawnObstacle = function() {
-	// body...
-	//don't delete and respawn, have calc the maximum that can be seen at once
+ObstacleController.prototype.spawnObstacles = function(n) {
+	for (var i=0; i<n; i++){
+		this.obstacles.push(new Obstacle(canvas.width+i*this.spacing,i*50,n));
+	}
+};
+
+ObstacleController.prototype.update = function(){
+	for (var i=0; i<this.obstacles.length; i++){
+		var obs = this.obstacles[i];
+		if (obs.outOfBounds()){
+			obs.x+=this.obstacles.length*this.spacing;
+			continue;
+		}
+		obs.x+=game.obsSpeed;
+		obs.draw();
+	}
 };
 
 ObstacleController.prototype.checkCollision = function() {
-	// body...
-	//player's x does not change!
+	//..
 };
 
 var Player = function(x,y){
@@ -85,8 +93,8 @@ Player.prototype.draw = function() {
 
 Player.prototype.update = function() {
 	if (!this.frozen){	
-		p1.pos.add(p1.vel);
-		p1.vel.add(p1.acc);
+		this.pos.add(this.vel);
+		this.vel.add(this.acc);
 	}
 };
 
@@ -97,20 +105,16 @@ var GameController = function(){
 };
 
 var p1 = new Player(50,50);
-var o1 = new Obstacle(200,100);
 var oc = new ObstacleController();
+
+oc.spawnObstacles(3);
 
 
 var update = function() {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 	p1.update();
-	o1.update();
-
+	oc.update();
 	p1.draw();
-	o1.draw();
-	//...
-	// requestAnimationFrame(draw);
 }
 
-// draw(); 
-setInterval(update,100);
+setInterval(update,30);
