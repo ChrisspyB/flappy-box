@@ -25,11 +25,17 @@ Vector2d.prototype.mult = function(s) {
 var Obstacle = function(x,y) {
 	this.x = x;
 	this.y = y;
-	this.w = 100;
-	this.h = 100;
+	this.w = 100; // half of the width
+	this.h = 30;
 };
 Obstacle.prototype.draw = function() {
-	// body...
+	ctx.beginPath();
+	ctx.rect(this.x-this.w, 0, this.w+this.w, this.y-this.h);
+	ctx.rect(this.x-this.w, this.y+this.h,
+		this.w+this.w, canvas.height-this.y+this.h);
+	ctx.fillStyle = '#000000';
+	ctx.fill();
+	ctx.closePath();
 };
 
 Obstacle.prototype.outOfBounds = function() {
@@ -60,27 +66,51 @@ ObstacleController.prototype.checkCollision = function() {
 var Player = function(x,y){
 	this.pos = new Vector2d(x,y); // position of player's centre
 	this.vel = new Vector2d(0,0);
-	this.acc = new Vector2d(0,0);
-
-	this.size = 10; // ideally an even number
-
+	this.acc = new Vector2d(0,0.100);
+	this.frozen = false;
+	this.canJump = false;
+	this.size = 20; // ideally an even number
 };
 
 Player.prototype.draw = function() {
 	ctx.beginPath();
 	ctx.rect(this.pos.x - this.size/2, this.pos.y - this.size/2,
 		this.size, this.size);
+	ctx.rect(this.pos.x - this.size/4, this.pos.y - this.size/4,
+		this.size/2, this.size/2);
 	ctx.fillStyle = '#000000';
 	ctx.fill();
 	ctx.closePath();
 };
 
+Player.prototype.update = function() {
+	if (!this.frozen){	
+		p1.pos.add(p1.vel);
+		p1.vel.add(p1.acc);
+	}
+};
 
-function draw() {
+var GameController = function(){
+	this.state = 0; // ..use bitflags?
+	this.player = new Player(50,50);
+	this.oc = ObstacleController();
+};
+
+var p1 = new Player(50,50);
+var o1 = new Obstacle(200,100);
+var oc = new ObstacleController();
+
+
+var update = function() {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
+	p1.update();
+	o1.update();
+
+	p1.draw();
+	o1.draw();
 	//...
-	requestAnimationFrame(draw);
+	// requestAnimationFrame(draw);
 }
 
-
-draw();
+// draw(); 
+setInterval(update,100);
