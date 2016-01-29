@@ -2,13 +2,16 @@
 
 console.log('Running flappyjs.js');
 
-var canvas = document.getElementById('canvasBO'); // the canvas element
+var canvas = document.getElementById('canvasFB'); // the canvas element
 var ctx = canvas.getContext('2d'); // the canvas rendering context
 
 var GLOBALS = {obsSpeed : -5};
 var game = {obsSpeed : GLOBALS.obsSpeed};
 
 var highscore = 0; // Could try store this serverside.
+var spacePressed = false;
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
 
 var Vector2d  = function (x,y) {
 	this.x = x;
@@ -74,9 +77,12 @@ ObstacleController.prototype.checkCollision = function() {
 var Player = function(x,y){
 	this.pos = new Vector2d(x,y); // position of player's centre
 	this.vel = new Vector2d(0,0);
-	this.acc = new Vector2d(0,0.100);
+	this.acc = new Vector2d(0,0.5);
 	this.frozen = false;
-	this.canJump = false;
+	this.canJump = true;
+	this.jumpDelay = 5;
+	this.jumpTimer = 0;
+	this.jumpSpd = -5; // Vertical speed after jumping
 	this.size = 20; // ideally an even number
 };
 
@@ -92,10 +98,19 @@ Player.prototype.draw = function() {
 };
 
 Player.prototype.update = function() {
-	if (!this.frozen){	
-		this.pos.add(this.vel);
-		this.vel.add(this.acc);
+	if (this.jumpTimer<this.jumpDelay){
+		this.jumpTimer++;
+	}else if (!this.canJump) {
+		this.canJump = true;
 	}
+	if (this.frozen){ return; }
+	if (this.canJump && spacePressed){
+		this.vel.y = this.jumpSpd;
+		this.canJump = false;
+		this.jumpTimer=0;
+	}
+	this.pos.add(this.vel);
+	this.vel.add(this.acc);
 };
 
 var GameController = function(){
@@ -109,6 +124,16 @@ var oc = new ObstacleController();
 
 oc.spawnObstacles(3);
 
+function keyDownHandler(e){
+	if (e.keyCode == 32){
+		spacePressed = true;
+	}
+};
+function keyUpHandler(e){
+	if (e.keyCode == 32){
+		spacePressed = false;
+	}
+};
 
 var update = function() {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
