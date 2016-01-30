@@ -94,7 +94,6 @@ ObstacleController.prototype.update = function(player){
 };
 
 ObstacleController.prototype.checkCollision = function(p) {
-	// this.obstacles[0]
 	if(p.pos.x < this.obstacles[this.leader].x-this.obstacles[this.leader].w){ 
 		return; 
 	}
@@ -117,7 +116,7 @@ ObstacleController.prototype.checkCollision = function(p) {
 var Player = function(x,y){
 	this.pos = new Vector2d(x,y); // position of player's centre
 	this.vel = new Vector2d(0,0);
-	this.acc = new Vector2d(0,0.8);
+	this.acc = new Vector2d(0,0.7);
 	this.size = 20; // ideally an even number
 	this.init(x,y);
 };
@@ -160,6 +159,13 @@ Player.prototype.update = function() {
 	this.vel.add(this.acc);
 };
 
+var drawScore = function(first_argument) {
+	ctx.font='16px Arial';;
+	ctx.fillStyle = score>highscore ? '#DD0000':'#0095DD';
+	ctx.fillText('Score: '+score,8,20);
+	ctx.fillStyle = '#0095DD';
+	ctx.fillText('Highscore: '+highscore,8,40);
+};
 function keyDownHandler(e){
 	if (e.keyCode == 32){
 		spacePressed = true;
@@ -176,6 +182,7 @@ var oc = new ObstacleController();
 oc.spawnObstacles(3);
 
 var restart = function(){
+	highscore=highscore>=score ? highscore:score;
 	p1.init(50,50);
 	oc.reset();
 	score = 0;
@@ -185,6 +192,9 @@ var update = function() {
 	p1.update();
 	p1.draw();
 	oc.update(p1);
+	drawScore();
+	// requestAnimationFrame(update);
 }
 
 setInterval(update,30);
+// update();
