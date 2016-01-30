@@ -1,18 +1,12 @@
 'use strict'
 
-console.log('Running flappyjs.js');
-
 var canvas = document.getElementById('canvasFB'); // the canvas element
 var ctx = canvas.getContext('2d'); // the canvas rendering context
-
-var GLOBALS = {
-	obsSpeed : -5
-};
-var game = {obsSpeed : GLOBALS.obsSpeed};
 
 var highscore = 0; // Could try store this serverside.
 var score = 0;
 var spacePressed = false;
+
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
@@ -60,6 +54,7 @@ var ObstacleController = function(){
 	this.leader = 0; //which obstacle passes player next?
 	this.w = 40; // half of the width
 	this.h = 40; // half height of hole
+	this.speed = -5;
 };
 ObstacleController.prototype.reset = function() {
 	for (var i=0; i<this.obstacles.length; i++){
@@ -87,7 +82,7 @@ ObstacleController.prototype.update = function(player){
 				(canvas.height -2 * (this.padding + this.h)));
 			continue;
 		}
-		obs.x+=game.obsSpeed;
+		obs.x+=this.speed;
 		obs.draw();
 	}
 	this.checkCollision(player);
@@ -193,8 +188,6 @@ var update = function() {
 	p1.draw();
 	oc.update(p1);
 	drawScore();
-	// requestAnimationFrame(update);
 }
 
 setInterval(update,30);
-// update();
