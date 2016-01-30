@@ -5,7 +5,9 @@ console.log('Running flappyjs.js');
 var canvas = document.getElementById('canvasFB'); // the canvas element
 var ctx = canvas.getContext('2d'); // the canvas rendering context
 
-var GLOBALS = {obsSpeed : -5};
+var GLOBALS = {
+	obsSpeed : -5
+};
 var game = {obsSpeed : GLOBALS.obsSpeed};
 
 var highscore = 0; // Could try store this serverside.
@@ -25,12 +27,11 @@ Vector2d.prototype.mult = function(s) {
 	this.x *= s;
 	this.y *= s;
 };
-var Obstacle = function(x,y,s) {
+var Obstacle = function(x,y,w,h) {
 	this.x = x;
 	this.y = y;
-	this.siblings = s; // # fellow boxes
-	this.w = 25; // half of the width
-	this.h = 30;
+	this.w = w; // half of the width
+	this.h = h;
 };
 Obstacle.prototype.draw = function() {
 	ctx.beginPath();
@@ -49,40 +50,66 @@ Obstacle.prototype.outOfBounds = function() {
 
 var ObstacleController = function(){
 	this.obstacles = [];
-	this.spacing = canvas.width/2;
+	this.spacing = 275;
+	this.padding = 5; //defines space where obstacle's holes cannot be
+	this.leader = 0; //which obstacle passes player next?
+	this.w = 40; // half of the width
+	this.h = 40; // half height of hole
 };
 
 ObstacleController.prototype.spawnObstacles = function(n) {
 	for (var i=0; i<n; i++){
-		this.obstacles.push(new Obstacle(canvas.width+i*this.spacing,i*50,n));
+		this.obstacles.push(
+			new Obstacle(canvas.width+i*this.spacing,i*50,
+				this.w,this.h));
 	}
 };
 
-ObstacleController.prototype.update = function(){
+ObstacleController.prototype.update = function(player){
 	for (var i=0; i<this.obstacles.length; i++){
 		var obs = this.obstacles[i];
 		if (obs.outOfBounds()){
 			obs.x+=this.obstacles.length*this.spacing;
+			obs.y = this.padding + obs.h + Math.floor(Math.random()*
+				(canvas.height -2 * (this.padding + obs.h)))
 			continue;
 		}
 		obs.x+=game.obsSpeed;
 		obs.draw();
 	}
+	this.checkCollision(player);
 };
 
-ObstacleController.prototype.checkCollision = function() {
-	//..
+ObstacleController.prototype.checkCollision = function(p) {
+
+	if(p.pos.x < this.obstacles[this.leader].x-this.obstacles[this.leader].w){ 
+		return; 
+	}
+	var ob = this.obstacles[this.leader];
+	if (p.pos.x > ob.x+this.w) {
+		this.leader++;
+		if (this.leader>=this.obstacles.length){
+			this.leader = 0;
+		}
+		console.log(this.leader);
+	}
+	else if(p.pos.y<ob.y-ob.h || p.pos.y>ob.y+ob.h){ 
+		//collision...
+		console.log('Ouch');
+	}
+
+	return;
 };
 
 var Player = function(x,y){
 	this.pos = new Vector2d(x,y); // position of player's centre
 	this.vel = new Vector2d(0,0);
-	this.acc = new Vector2d(0,0.5);
+	this.acc = new Vector2d(0,0.8);
 	this.frozen = false;
 	this.canJump = true;
 	this.jumpDelay = 5;
 	this.jumpTimer = 0;
-	this.jumpSpd = -5; // Vertical speed after jumping
+	this.jumpSpd = -6; // Vertical speed after jumping
 	this.size = 20; // ideally an even number
 };
 
@@ -138,8 +165,8 @@ function keyUpHandler(e){
 var update = function() {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 	p1.update();
-	oc.update();
 	p1.draw();
+	oc.update(p1);
 }
 
-setInterval(update,30);
+setInterval(update,60);
