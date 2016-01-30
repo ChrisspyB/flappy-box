@@ -68,7 +68,9 @@ ObstacleController.prototype.reset = function() {
 ObstacleController.prototype.spawnObstacles = function(n) {
 	for (var i=0; i<n; i++){
 		this.obstacles.push(
-			new Obstacle(canvas.width+i*this.spacing,i*50,
+			new Obstacle(canvas.width+i*this.spacing,
+				this.padding + this.h + Math.floor(Math.random()*
+				(canvas.height -2 * (this.padding + this.h))),
 				this.w,this.h));
 	}
 };
@@ -89,18 +91,20 @@ ObstacleController.prototype.update = function(player){
 };
 
 ObstacleController.prototype.checkCollision = function(p) {
-	if(p.pos.x < this.obstacles[this.leader].x-this.obstacles[this.leader].w){ 
+	if(p.pos.x+p.size/2 < 
+		this.obstacles[this.leader].x-this.obstacles[this.leader].w){ 
 		return; 
 	}
 	var ob = this.obstacles[this.leader];
-	if (p.pos.x > ob.x+this.w) {
+	if (p.pos.x - p.size/2 > ob.x+this.w) {
 		this.leader++;
 		score++;
 		if (this.leader>=this.obstacles.length){
 			this.leader = 0;
 		}
 	}
-	else if(p.pos.y<ob.y-ob.h || p.pos.y>ob.y+ob.h){ 
+	else if(p.pos.y - p.size/2 <ob.y-ob.h || 
+			p.pos.y + p.size/2 >ob.y+ob.h){ 
 		//collision...
 		restart();
 	}
