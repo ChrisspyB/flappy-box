@@ -11,6 +11,7 @@ var GLOBALS = {
 var game = {obsSpeed : GLOBALS.obsSpeed};
 
 var highscore = 0; // Could try store this serverside.
+var score = 0;
 var spacePressed = false;
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -26,6 +27,10 @@ Vector2d.prototype.add = function(v) {
 Vector2d.prototype.mult = function(s) {
 	this.x *= s;
 	this.y *= s;
+};
+Vector2d.prototype.set = function(x,y) {
+	this.x = x;
+	this.y = y;
 };
 var Obstacle = function(x,y,w,h) {
 	this.x = x;
@@ -56,7 +61,15 @@ var ObstacleController = function(){
 	this.w = 40; // half of the width
 	this.h = 40; // half height of hole
 };
-
+ObstacleController.prototype.reset = function() {
+	for (var i=0; i<this.obstacles.length; i++){
+		var obs = this.obstacles[i];
+		obs.x = canvas.width+i*this.spacing
+		obs.y = this.padding + this.h + Math.floor(Math.random()*
+				(canvas.height -2 * (this.padding + this.h)));
+	}
+	this.leader = 0;
+};
 ObstacleController.prototype.spawnObstacles = function(n) {
 	for (var i=0; i<n; i++){
 		this.obstacles.push(
@@ -70,8 +83,8 @@ ObstacleController.prototype.update = function(player){
 		var obs = this.obstacles[i];
 		if (obs.outOfBounds()){
 			obs.x+=this.obstacles.length*this.spacing;
-			obs.y = this.padding + obs.h + Math.floor(Math.random()*
-				(canvas.height -2 * (this.padding + obs.h)))
+			obs.y = this.padding + this.h + Math.floor(Math.random()*
+				(canvas.height -2 * (this.padding + this.h)));
 			continue;
 		}
 		obs.x+=game.obsSpeed;
@@ -81,21 +94,21 @@ ObstacleController.prototype.update = function(player){
 };
 
 ObstacleController.prototype.checkCollision = function(p) {
-
+	// this.obstacles[0]
 	if(p.pos.x < this.obstacles[this.leader].x-this.obstacles[this.leader].w){ 
 		return; 
 	}
 	var ob = this.obstacles[this.leader];
 	if (p.pos.x > ob.x+this.w) {
 		this.leader++;
+		score++;
 		if (this.leader>=this.obstacles.length){
 			this.leader = 0;
 		}
-		console.log(this.leader);
 	}
 	else if(p.pos.y<ob.y-ob.h || p.pos.y>ob.y+ob.h){ 
 		//collision...
-		console.log('Ouch');
+		restart();
 	}
 
 	return;
@@ -105,12 +118,19 @@ var Player = function(x,y){
 	this.pos = new Vector2d(x,y); // position of player's centre
 	this.vel = new Vector2d(0,0);
 	this.acc = new Vector2d(0,0.8);
+	this.size = 20; // ideally an even number
+	this.init(x,y);
+};
+
+Player.prototype.init = function(x,y) {
+	//for initialisation and reset.
+	this.pos.set(x,y);
+	this.vel.set(0,0);
 	this.frozen = false;
 	this.canJump = true;
 	this.jumpDelay = 5;
 	this.jumpTimer = 0;
 	this.jumpSpd = -6; // Vertical speed after jumping
-	this.size = 20; // ideally an even number
 };
 
 Player.prototype.draw = function() {
@@ -140,17 +160,6 @@ Player.prototype.update = function() {
 	this.vel.add(this.acc);
 };
 
-var GameController = function(){
-	this.state = 0; // ..use bitflags?
-	this.player = new Player(50,50);
-	this.oc = ObstacleController();
-};
-
-var p1 = new Player(50,50);
-var oc = new ObstacleController();
-
-oc.spawnObstacles(3);
-
 function keyDownHandler(e){
 	if (e.keyCode == 32){
 		spacePressed = true;
@@ -162,6 +171,15 @@ function keyUpHandler(e){
 	}
 };
 
+var p1 = new Player(50,50);
+var oc = new ObstacleController();
+oc.spawnObstacles(3);
+
+var restart = function(){
+	p1.init(50,50);
+	oc.reset();
+	score = 0;
+};
 var update = function() {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 	p1.update();
@@ -169,4 +187,4 @@ var update = function() {
 	oc.update(p1);
 }
 
-setInterval(update,60);
+setInterval(update,30);
