@@ -6,6 +6,7 @@ var ctx = canvas.getContext('2d'); // the canvas rendering context
 var highscore = 0; // Could try store this serverside.
 var score = 0;
 var spacePressed = false;
+var AI = null;
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -165,9 +166,37 @@ var drawScore = function(first_argument) {
 	ctx.fillStyle = '#0095DD';
 	ctx.fillText('Highscore: '+highscore,8,40);
 };
+
+function flappyAI(){
+	var obs_ind;
+	var closest = 666;
+	for(var i=0; i<oc.obstacles.length; i++){
+		var obs_pos = oc.obstacles[i].x - p1.pos.x + oc.obstacles[0].w + p1.size/2;
+		if (obs_pos>0){
+			if (closest === 666){
+				closest = obs_pos;
+				obs_ind = i;
+			} else if (closest > obs_pos){
+				closest = obs_pos;
+				obs_ind = i;
+			}
+		}
+	}
+	if (oc.obstacles[obs_ind].y < p1.pos.y) {
+		spacePressed=true; 
+		setTimeout(function(){spacePressed=false},30);
+	} else if (oc.obstacles[obs_ind].y > p1.pos.y) {}
+}
+
 function keyDownHandler(e){
 	if (e.keyCode == 32){
 		spacePressed = true;
+	} else if (e.keyCode == 80) {
+		// Activate AI.
+		AI = setInterval(flappyAI,60);
+	} else if (e.keyCode == 79) {
+		// Deactivate AI.
+		clearInterval(AI);
 	}
 };
 function keyUpHandler(e){
@@ -193,5 +222,6 @@ var update = function() {
 	oc.update(p1);
 	drawScore();
 }
+
 
 setInterval(update,30);
